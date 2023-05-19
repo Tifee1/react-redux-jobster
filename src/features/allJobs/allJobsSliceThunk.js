@@ -1,4 +1,5 @@
 import { customFetch } from '../../utils/axios'
+import { clearAllValues } from '../user/userSlice'
 
 export const getJobsThunk = async (_, thunkAPI) => {
   try {
