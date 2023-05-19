@@ -1,30 +1,12 @@
 import { customFetch } from '../../utils/axios'
-import { clearAllJobs } from '../allJobs/allJobsSlice'
-import { clearValues } from '../jobs/jobsSlice'
-import { clearAllValues, logout } from '../user/userSlice'
+import { getJobs, hideLoading, showLoading } from '../allJobs/allJobsSlice'
+import { clearAllValues } from '../user/userSlice'
+import { clearValues } from './jobsSlice'
 
-export const loginThunk = async (user, thunkAPI) => {
+export const createJobThunk = async (job, thunkAPI) => {
   try {
-    const resp = await customFetch.post('/auth/login', user)
-    return resp.data
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response.data.msg)
-  }
-}
-
-export const registerThunk = async (user, thunkAPI) => {
-  try {
-    const resp = await customFetch.post('/auth/register', user)
-    return resp.data
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response.data.msg)
-  }
-}
-
-export const updateThunk = async (user, thunkAPI) => {
-  try {
-    const resp = await customFetch.patch('/auth/updateUser', user)
-    console.log(resp)
+    const resp = await customFetch.post('/jobs', job)
+    thunkAPI.dispatch(clearValues())
     return resp.data
   } catch (error) {
     if (error.response.status === 401) {
@@ -36,13 +18,36 @@ export const updateThunk = async (user, thunkAPI) => {
   }
 }
 
-export const clearAllValuesThunk = async (message, thunkAPI) => {
+export const deleteJobThunk = async (id, thunkAPI) => {
+  thunkAPI.dispatch(showLoading())
   try {
-    thunkAPI.dispatch(clearAllJobs())
-    thunkAPI.dispatch(clearValues())
-    thunkAPI.dispatch(logout(message))
-    return Promise.resolve()
+    const resp = await customFetch.delete(`/jobs/${id}`)
+    thunkAPI.dispatch(getJobs())
+    thunkAPI.dispatch(hideLoading())
+    return resp.data
   } catch (error) {
-    return Promise.reject()
+    thunkAPI.dispatch(getJobs())
+    thunkAPI.dispatch(hideLoading)
+    if (error.response.status === 401) {
+      thunkAPI.dispatch(clearAllValues('Unauthorized Request, Logging out...'))
+      return thunkAPI.rejectWithValue(error.response.data.msg)
+    }
+    return thunkAPI.rejectWithValue(error.response.data.msg)
+    // checkForUnauthorizedRequest(error, thunkAPI)
+  }
+}
+
+export const editJobThunk = async (job, thunkAPI) => {
+  try {
+    const resp = await customFetch.patch(`/jobs/${job.id}`, job)
+    thunkAPI.dispatch(clearValues())
+    return resp.data
+  } catch (error) {
+    if (error.response.status === 401) {
+      thunkAPI.dispatch(clearAllValues('Unauthorized Request, Logging out...'))
+      return thunkAPI.rejectWithValue(error.response.data.msg)
+    }
+    return thunkAPI.rejectWithValue(error.response.data.msg)
+    // checkForUnauthorizedRequest(error, thunkAPI)
   }
 }
